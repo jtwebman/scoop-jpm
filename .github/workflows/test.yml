@@ -22,11 +22,12 @@ jobs:
         run: |
           iex "& {$(irm https://get.scoop.sh)} -RunAsAdmin"
           "$env:USERPROFILE\scoop\shims" | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
+      # The manifest file itself: Scoop takes a bucket only from a git url, and this checkout's
+      # manifest, a pull request's too, is the one to test.
       - name: Install jpm from this checkout
         shell: pwsh
         run: |
-          scoop bucket add jpm $env:GITHUB_WORKSPACE
-          scoop install jpm/jpm
+          scoop install "$env:GITHUB_WORKSPACE\bucket\jpm.json"
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
       - name: Run it
         shell: pwsh
