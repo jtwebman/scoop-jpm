@@ -14,7 +14,9 @@
             "hash": "9bd580d0490bcad958532b71895216c84d53488f85447f588288f4f4cfb79a2a"
         }
     },
-    "post_install": "Copy-Item \"$dir\\jpm.exe\" \"$dir\\jpx.exe\" -Force",
+    "installer": {
+        "script": "Copy-Item \"$dir\\jpm.exe\" \"$dir\\jpx.exe\" -Force"
+    },
     "bin": [
         "jpm.exe",
         "jpx.exe"
