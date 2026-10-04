@@ -1,0 +1,35 @@
+name: update
+
+# Every few hours, and on demand: Scoop's own checkver finds jpm's latest release, and its
+# autoupdate rewrites the manifest's version, urls and hashes (from the release's SHA256SUMS).
+# A change is committed here, and the test workflow installs it.
+on:
+  schedule:
+    - cron: "17 */4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install Scoop
+        shell: pwsh
+        run: iex "& {$(irm https://get.scoop.sh)} -RunAsAdmin"
+      - name: Update the manifest
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          $checkver = "$env:USERPROFILE\scoop\apps\scoop\current\bin\checkver.ps1"
+          & $checkver -App jpm -Dir "$env:GITHUB_WORKSPACE\bucket" -Update
+          git diff --exit-code --quiet -- bucket/jpm.json
+          if (-not $LASTEXITCODE) { "jpm is up to date"; exit 0 }
+          $version = (Get-Content bucket/jpm.json -Raw | ConvertFrom-Json).version
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "jpm $version"
+          git push

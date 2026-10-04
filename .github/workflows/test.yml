@@ -1,0 +1,39 @@
+name: test
+
+# The manifest installed through Scoop on Windows and run, for every change: the updater's too.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  install:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install Scoop
+        shell: pwsh
+        run: |
+          iex "& {$(irm https://get.scoop.sh)} -RunAsAdmin"
+          "$env:USERPROFILE\scoop\shims" | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
+      - name: Install jpm from this checkout
+        shell: pwsh
+        run: |
+          scoop bucket add jpm $env:GITHUB_WORKSPACE
+          scoop install jpm/jpm
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+      - name: Run it
+        shell: pwsh
+        run: |
+          $want = (Get-Content bucket/jpm.json -Raw | ConvertFrom-Json).version
+          foreach ($exe in "jpm", "jpx") {
+            $got = & $exe --version
+            if ($got -ne $want) { throw "$exe --version said $got, not $want" }
+            "$exe $got"
+          }
