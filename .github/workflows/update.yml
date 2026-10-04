@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   update:
@@ -23,6 +24,7 @@ jobs:
         shell: pwsh
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           $checkver = "$env:USERPROFILE\scoop\apps\scoop\current\bin\checkver.ps1"
           & $checkver -App jpm -Dir "$env:GITHUB_WORKSPACE\bucket" -Update
@@ -33,3 +35,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -am "jpm $version"
           git push
+          # A push with this workflow's token starts no workflow: the test is started by name.
+          gh workflow run test.yml
